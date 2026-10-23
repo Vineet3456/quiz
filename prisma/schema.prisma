@@ -1,0 +1,56 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Student {
+  id          String       @id @default(uuid())
+  name        String
+  rollNumber  String       @unique
+  totalScore  Int          @default(0)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  submissions Submission[]
+}
+
+model Quiz {
+  id          String       @id @default(uuid())
+  title       String
+  topic       String
+  difficulty  String       @default("Medium")
+  timeLimit   Int          @default(10) // time limit in minutes
+  shareableId String       @unique
+  createdAt   DateTime     @default(now())
+  questions   Question[]
+  submissions Submission[]
+}
+
+model Question {
+  id            String   @id @default(uuid())
+  quizId        String
+  quiz          Quiz     @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  text          String
+  options       Json     // JSON array of strings e.g. ["Option A", "Option B", ...]
+  correctAnswer String
+  createdAt     DateTime @default(now())
+
+  @@index([quizId])
+}
+
+model Submission {
+  id             String   @id @default(uuid())
+  quizId         String
+  quiz           Quiz     @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  studentId      String
+  student        Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  score          Int
+  totalQuestions Int      @default(0)
+  submittedAt    DateTime @default(now())
+
+  @@index([quizId])
+  @@index([studentId])
+}
